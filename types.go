@@ -5,9 +5,9 @@ import (
 	"net/http"
 )
 
-// GetTypes fetches a list of all card types
+// GetTypes fetches a list of all card types.
 func GetTypes() ([]string, error) {
-	resp, err := http.Get(queryUrl + "types")
+	resp, err := http.Get(queryURL + "types")
 	if err != nil {
 		return nil, err
 	}
@@ -25,9 +25,9 @@ func GetTypes() ([]string, error) {
 	return res.Types, nil
 }
 
-// GetSuperTypes fetches a list of all card supertypes
+// GetSuperTypes fetches a list of all card supertypes.
 func GetSuperTypes() ([]string, error) {
-	resp, err := http.Get(queryUrl + "supertypes")
+	resp, err := http.Get(queryURL + "supertypes")
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +45,9 @@ func GetSuperTypes() ([]string, error) {
 	return res.Types, nil
 }
 
-// GetSubTypes fetches a list of all card subtypes
+// GetSubTypes fetches a list of all card subtypes.
 func GetSubTypes() ([]string, error) {
-	resp, err := http.Get(queryUrl + "subtypes")
+	resp, err := http.Get(queryURL + "subtypes")
 	if err != nil {
 		return nil, err
 	}
@@ -65,9 +65,9 @@ func GetSubTypes() ([]string, error) {
 	return res.Types, nil
 }
 
-// GetFormats fetches a list of all known game formats
+// GetFormats fetches a list of all known game formats.
 func GetFormats() ([]string, error) {
-	resp, err := http.Get(queryUrl + "formats")
+	resp, err := http.Get(queryURL + "formats")
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	queryUrl = "https://api.magicthegathering.io/v1/"
+	queryURL = "https://api.magicthegathering.io/v1/"
 )
 
 var (
@@ -93,7 +93,7 @@ var (
 // Query interface can be used to query multiple cards by their properties
 type Query interface {
 	// Where filters the given column by the given value
-	Where(column cardColumn, qry string) Query
+	Where(column cardColumn, query string) Query
 	// Sorts the query results by the given column
 	OrderBy(column cardColumn) Query
 
@@ -144,14 +144,14 @@ func (q query) All() ([]*Card, error) {
 	for k, v := range q {
 		queryVals.Set(k, v)
 	}
-	nextUrl := queryUrl + "cards?" + queryVals.Encode()
-	for nextUrl != "" {
-		cards, header, err := fetchCards(nextUrl)
+	nextURL := queryURL + "cards?" + queryVals.Encode()
+	for nextURL != "" {
+		cards, header, err := fetchCards(nextURL)
 		if err != nil {
 			return nil, err
 		}
 
-		nextUrl = ""
+		nextURL = ""
 
 		if linkH, ok := header["Link"]; ok {
 			parts := strings.Split(linkH[0], ",")
@@ -159,7 +159,7 @@ func (q query) All() ([]*Card, error) {
 				match := linkRE.FindStringSubmatch(link)
 				if match != nil {
 					if match[2] == "next" {
-						nextUrl = match[1]
+						nextURL = match[1]
 					}
 				}
 			}
@@ -174,10 +174,9 @@ func (q query) Page(pageNum int) (cards []*Card, totalCardCount int, err error) 
 	return q.PageS(pageNum, 100)
 }
 
-func (q query) PageS(pageNum int, pageSize int) (cards []*Card, totalCardCount int, err error) {
-	cards = nil
-	totalCardCount = 0
-	err = nil
+func (q query) PageS(pageNum int, pageSize int) ([]*Card, int, error) {
+	var cards []*Card
+	totalCardCount := 0
 
 	queryVals := make(url.Values)
 	for k, v := range q {
@@ -187,7 +186,7 @@ func (q query) PageS(pageNum int, pageSize int) (cards []*Card, totalCardCount i
 	queryVals.Set("page", strconv.Itoa(pageNum))
 	queryVals.Set("pageSize", strconv.Itoa(pageSize))
 
-	url := queryUrl + "cards?" + queryVals.Encode()
+	url := queryURL + "cards?" + queryVals.Encode()
 	cards, header, err := fetchCards(url)
 	if err != nil {
 		return nil, 0, err
@@ -210,7 +209,7 @@ func (q query) Random(count int) ([]*Card, error) {
 	queryVals.Set("random", "true")
 	queryVals.Set("pageSize", strconv.Itoa(count))
 
-	url := queryUrl + "cards?" + queryVals.Encode()
+	url := queryURL + "cards?" + queryVals.Encode()
 	cards, _, err := fetchCards(url)
 	return cards, err
 }

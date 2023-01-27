@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-type setColumn string
-
 var (
 	// SetName is the name of the set
 	SetName = setColumn("name")
@@ -20,80 +18,88 @@ var (
 
 // SetCode representing one specific Set of cards
 type SetCode string
+type setColumn string
+type setQuery map[string]string
 
 // BoosterContent represent one or more types of cards within a booster
 type BoosterContent []string
 
-// Set stores information about a mtg-set
+// Set stores information about a mtg-set.
 type Set struct {
-	// The code name of the set
+	// SetCode is the code name of the set.
 	SetCode `json:"code"`
 
-	// The name of the set
+	// Name is the name of the set.
 	Name string `json:"name"`
-	// The block the set is in
+	// Block is the block the set is in.
 	Block string `json:"block"`
-	// The code that Gatherer uses for the set. Only present if different than ‘code’
+	// GathererCode is the code that Gatherer uses for the set.
+	// Only present if different than ‘code’
 	GathererCode string `json:"gathererCode"`
-	// An old style code used by some Magic software. Only present if different than 'gathererCode’ and 'code’
+	// OldCode is an old style code used by some Magic software.
+	// Only present if different than 'gathererCode’ and 'code’.
 	OldCode string `json:"oldCode"`
-	// The code that magiccards.info uses for the set. Only present if magiccards.info has this set
+	// MagicCardsInfoCode is the code magiccards.info uses for the set.
+	// Only present if magiccards.info has this set.
 	MagicCardsInfoCode string `json:"magicCardsInfoCode"`
-	// When the set was released (YYYY-MM-DD). For promo sets, the date the first card was released.
+	// ReleaseDate is when the set was released (YYYY-MM-DD).
+	// For promo sets, the date the first card was released.
 	ReleaseDate string `json:"releaseDate"`
-	// The type of border on the cards, either “white”, “black” or “silver”
+	// Border is the type of border on the cards.
+	// Either: “white”, “black” or “silver”.
 	Border string `json:"border"`
-	// Type of set. One of: “core”, “expansion”, “reprint”, “box”, “un”, “from the vault”, “premium deck”, “duel deck”, “starter”, “commander”, “planechase”, “archenemy”, “promo”, “vanguard”, “masters”
+	// Expansion is the type of set.
+	// Either: “core”, “expansion”, “reprint”, “box”, “un”, “from the vault”,\
+	// “premium deck”, “duel deck”, “starter”, “commander”, “planechase”,\
+	// “archenemy”, “promo”, “vanguard”, “masters”.
 	Expansion string `json:"expansion"`
-	// Present and set to true if the set was only released online
+	// OnlineOnly is if the set was only released online.
 	OnlineOnly bool `json:"onlineOnly"`
-	// Booster contents for this set
+	// Booster contents for this set.
 	Booster []BoosterContent `json:"booster"`
 }
 
-// SetQuery is in Interface to query sets
+// SetQuery is in Interface to query sets.
 type SetQuery interface {
-	// Where filters the given column by the given value
+	// Where filters the given column by the given value.
 	Where(col setColumn, qry string) SetQuery
 
 	// Copy creates a copy of the SetQuery.
 	Copy() SetQuery
-	// All returns alls Sets which match the query
+	// All returns alls Sets which match the query.
 	All() ([]*Set, error)
-	// Page returns the Sets of the given page and the total count of sets which match the query.
-	// The default PageSize is 500. See also PageS
+	// Page returns the Sets for given page and total count of matching sets.
+	// The default PageSize is 500. See also PageS.
 	Page(pageNum int) (sets []*Set, totalSetCount int, err error)
-	// PageS returns the Sets of the given page and page size. It also returns the total count of sets
-	// which match the query.
+	// PageS returns the Sets for given page and page size.
+	// It also returns the total count of sets matching the query.
 	PageS(pageNum int, pageSize int) (sets []*Set, totalSetCount int, err error)
 }
 
-type setQuery map[string]string
-
-// GenerateBooster returns a slice of cards which contains cards like a booster of the given set.
-func (sc SetCode) GenerateBooster() ([]*Card, error) {
-	cards, _, err := fetchCards(fmt.Sprintf("%ssets/%s/booster", queryUrl, sc))
+// GenerateBooster returns a slice of booster cards for the given set.
+func (s SetCode) GenerateBooster() ([]*Card, error) {
+	cards, _, err := fetchCards(fmt.Sprintf("%ssets/%s/booster", queryURL, s))
 	return cards, err
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (bc *BoosterContent) UnmarshalJSON(data []byte) error {
-	var s string
-	var sc []string
-	if err := json.Unmarshal(data, &s); err == nil {
-		*bc = []string{s}
+func (b *BoosterContent) UnmarshalJSON(asBytes []byte) error {
+	var strData string
+	var sDataSlice []string
+	if err := json.Unmarshal(asBytes, &strData); err == nil {
+		*b = []string{strData}
 		return nil
-	} else if err = json.Unmarshal(data, &sc); err == nil {
-		*bc = sc
+	} else if err = json.Unmarshal(asBytes, &sDataSlice); err == nil {
+		*b = sDataSlice
 		return nil
 	}
-	return fmt.Errorf("Unexpected booster content. Got %q", string(data))
+	return fmt.Errorf("Unexpected booster content. Got %q", string(asBytes))
 }
 
-// String returns the string representation of the BoosterContent
-func (bc *BoosterContent) String() string {
+// String returns the string representation of the BoosterContent.
+func (b *BoosterContent) String() string {
 	s := ""
-	for i, c := range *bc {
+	for i, c := range *b {
 		if i > 0 {
 			s += "|"
 		}
@@ -102,24 +108,24 @@ func (bc *BoosterContent) String() string {
 	return s
 }
 
-// String returns the string representation for the Set
+// String returns the string representation for the Set.
 func (s *Set) String() string {
 	return fmt.Sprintf("%s (%s)", s.Name, s.SetCode)
 }
 
-// NewSetQuery returns a new SetQuery
+// NewSetQuery returns a new SetQuery.
 func NewSetQuery() SetQuery {
 	return make(setQuery)
 }
 
 // Fetch returns the Set of the given SetCode.
-func (sc SetCode) Fetch() (*Set, error) {
-	sets, _, err := fetchSets(fmt.Sprintf("%ssets/%s", queryUrl, sc))
+func (s SetCode) Fetch() (*Set, error) {
+	sets, _, err := fetchSets(fmt.Sprintf("%ssets/%s", queryURL, s))
 	if err != nil {
 		return nil, err
 	}
 	if len(sets) != 1 {
-		return nil, fmt.Errorf("Set %q not found", string(sc))
+		return nil, fmt.Errorf("Set %q not found", string(s))
 	}
 	return sets[0], nil
 }
@@ -157,14 +163,14 @@ func (q setQuery) All() ([]*Set, error) {
 	for k, v := range q {
 		queryVals.Set(k, v)
 	}
-	nextUrl := queryUrl + "sets?" + queryVals.Encode()
-	for nextUrl != "" {
-		sets, header, err := fetchSets(nextUrl)
+	nextURL := queryURL + "sets?" + queryVals.Encode()
+	for nextURL != "" {
+		sets, header, err := fetchSets(nextURL)
 		if err != nil {
 			return nil, err
 		}
 
-		nextUrl = ""
+		nextURL = ""
 
 		if linkH, ok := header["Link"]; ok {
 			parts := strings.Split(linkH[0], ",")
@@ -172,7 +178,7 @@ func (q setQuery) All() ([]*Set, error) {
 				match := linkRE.FindStringSubmatch(link)
 				if match != nil {
 					if match[2] == "next" {
-						nextUrl = match[1]
+						nextURL = match[1]
 					}
 				}
 			}
@@ -189,12 +195,11 @@ func (q setQuery) Page(pageNum int) (sets []*Set, totalSetCount int, err error) 
 	return q.PageS(pageNum, 500)
 }
 
-// PageS returns the Sets of the given page and page size. It also returns the total count of sets
-// which match the query.
-func (q setQuery) PageS(pageNum int, pageSize int) (sets []*Set, totalSetCount int, err error) {
-	sets = nil
-	totalSetCount = 0
-	err = nil
+// PageS returns Sets of the given page and page size.
+// It also returns the total count of sets which match the query.
+func (q setQuery) PageS(pageNum int, pageSize int) ([]*Set, int, error) {
+	var sets []*Set
+	totalSetCount := 0
 
 	queryVals := make(url.Values)
 	for k, v := range q {
@@ -204,7 +209,7 @@ func (q setQuery) PageS(pageNum int, pageSize int) (sets []*Set, totalSetCount i
 	queryVals.Set("page", strconv.Itoa(pageNum))
 	queryVals.Set("pageSize", strconv.Itoa(pageSize))
 
-	url := queryUrl + "sets?" + queryVals.Encode()
+	url := queryURL + "sets?" + queryVals.Encode()
 	sets, header, err := fetchSets(url)
 	if err != nil {
 		return nil, 0, err
