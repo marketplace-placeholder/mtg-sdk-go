@@ -189,7 +189,7 @@ func (q setQuery) All() ([]*Set, error) {
 	return allSets, nil
 }
 
-// Page returns the Sets of the given page and the total count of sets which match the query.
+// Page returns the Sets of a given page and total count of sets matching the query.
 // The default PageSize is 500. See also PageS
 func (q setQuery) Page(pageNum int) (sets []*Set, totalSetCount int, err error) {
 	return q.PageS(pageNum, 500)

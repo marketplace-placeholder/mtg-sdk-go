@@ -9,37 +9,10 @@ import (
 	"time"
 )
 
-// Date which can be unmarshalled from json
-type Date time.Time
-
-// ServerError is an error implementation for server messages.
-type ServerError struct {
-	// Status code given by the server
-	Status string `json:"status"`
-	// Message given by the server
-	Message string `json:"error"`
-}
-
-// Error implements the error interface
-func (s ServerError) Error() string {
-	return s.Message
-}
-
-// ID interface for different card id types such as MultiverseId or CardId
-type ID interface {
-	Fetch() (*Card, error)
-}
-
-// MultiverseID which can be used to fetch the card by its id
-type MultiverseID uint32
-
-// CardID which can be used to fetch the card by its id
-type CardID string
-
 // Ruling contains additional rule information about the card.
 type Ruling struct {
 	// Date the information was released.
-	Date Date `json:"date"`
+	Date time.Time `json:"date"`
 	// Text of the ruling hint.
 	Text string `json:"text"`
 }
@@ -99,9 +72,11 @@ type Card struct {
 	// Examples: Common, Uncommon, Rare, Mythic Rare, Special, Basic Land.
 	Rarity string `json:"rarity"`
 	// Set defines what expansion set the card belongs to by set code.
-	Set SetCode `json:"set"`
+	//Set SetCode `json:"set"`
 	// SetName defines name of expansion set the card belongs to.
 	SetName string `json:"setName"`
+	// Text defines oracle text of card.
+	// May contain mana symbols and other symbols.
 	// Text defines oracle text of card.
 	// May contain mana symbols and other symbols.
 	Text string `json:"text"`
@@ -147,6 +122,8 @@ type Card struct {
 	Timeshifted bool `json:"timeshifted"`
 	// Hand defines the max hand size modifier.
 	// NOTE: Only exists for Vanguard cards.
+	// Hand defines the max hand size modifier.
+	// NOTE: Only exists for Vanguard cards.
 	Hand int `json:"hand"`
 	// Life defines starting life total modifier.
 	// NOTE: Only exists for Vanguard cards.
@@ -156,7 +133,7 @@ type Card struct {
 	// ReleaseDate defines when this card was released.
 	// NOTE: This is only set for promo cards. May not be accurate, some missing.
 	// Only partial date may be set (YYYY-MM-DD or YYYY-MM or YYYY).
-	ReleaseDate Date `json:"releaseDate"`
+	ReleaseDate time.Time `json:"releaseDate"`
 	// Starter defines if card only released as part of core box set.
 	Starter bool `json:"starter"`
 	// Rulings define rulings for the card.
@@ -166,7 +143,7 @@ type Card struct {
 	// NOTE: Not available for all sets.
 	ForeignNames []ForeignCardName `json:"foreignNames"`
 	// Printings defines the sets the card was printed in (set codes).
-	Printings []SetCode `json:"printings"`
+	//Printings []SetCode `json:"printings"`
 	// OriginalText defines text on card when it was first printed.
 	// NOTE: Not available for promo cards.
 	OriginalText string `json:"originalText"`
@@ -175,7 +152,7 @@ type Card struct {
 	OriginalType string `json:"originalType"`
 	// ID defines unique identification number of the card.
 	// ID calculated by SHA1 hash of setCode + cardName + cardImageName.
-	ID CardID `json:"id"`
+	ID string `json:"id"`
 	// Source defines where card was originally made available.
 	// For box sets that are theme decks, it's the deck the card is from.
 	Source string `json:"source"`
@@ -184,48 +161,37 @@ type Card struct {
 	Legalities []Legality `json:"legalities"`
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface. The Date is expected to be either YYYY, YYYY-MM or YYYY-MM-DD
-func (d *Date) UnmarshalJSON(asBytes []byte) error {
-	var strData string
-	err := json.Unmarshal(asBytes, &strData)
-	if err != nil {
-		return err
-	}
-
-	layouts := []string{
-		"2006-01-02", "2006-01", "2006",
-	}
-	for _, layout := range layouts {
-		t, err := time.Parse(layout, strData)
-		if err == nil {
-			*d = Date(t)
-			return nil
-		}
-	}
-	return fmt.Errorf("%q is no valid date", strData)
+// ServerError is an error implementation for server messages.
+type ServerError struct {
+	// Status code given by the server
+	Status string `json:"status"`
+	// Message given by the server
+	Message string `json:"error"`
 }
 
-// String returns the string representation of the card. Containing the cardname and the id
-func (c *Card) String() string {
-	return fmt.Sprintf("%s (%s)", c.Name, c.ID)
+// Error implements the error interface
+func (s ServerError) Error() string {
+	return s.Message
 }
 
+// cardResponse defines response from cards API Get request.
 type cardResponse struct {
 	Card  *Card   `json:"card"`
 	Cards []*Card `json:"cards"`
 }
 
+// decodeCards unmarshals resp body to cardResponse struct.
 func decodeCards(reader io.Reader) ([]*Card, error) {
-	cresp := new(cardResponse)
+	cardResp := new(cardResponse)
 	decoder := json.NewDecoder(reader)
-	err := decoder.Decode(&cresp)
+	err := decoder.Decode(&cardResp)
 	if err != nil {
 		return nil, err
 	}
-	if cresp.Card != nil {
-		return []*Card{cresp.Card}, nil
+	if cardResp.Card != nil {
+		return []*Card{cardResp.Card}, nil
 	}
-	return cresp.Cards, nil
+	return cardResp.Cards, nil
 }
 
 func checkError(r *http.Response) error {
@@ -241,11 +207,14 @@ func checkError(r *http.Response) error {
 	return sverr
 }
 
-func fetchCardByID(str string) (*Card, error) {
+// Fetch collects card by ID or MultiverseID; retuns Card pointer.
+func Fetch(str string) (*Card, error) {
+	queryURL := ""
 	resp, err := http.Get(fmt.Sprintf("%scards/%s", queryURL, str))
 	if err != nil {
 		return nil, err
 	}
+	// body is io.Reader
 	body := resp.Body
 	defer body.Close()
 
@@ -260,14 +229,4 @@ func fetchCardByID(str string) (*Card, error) {
 		return nil, fmt.Errorf("Card with ID %s not found", str)
 	}
 	return cards[0], nil
-}
-
-// Fetch returns pointer to card represented by the MutliverseID
-func (m MultiverseID) Fetch() (*Card, error) {
-	return fetchCardByID(fmt.Sprintf("%d", m))
-}
-
-// Fetch returns pointer to card represented by the CardID
-func (c CardID) Fetch() (*Card, error) {
-	return fetchCardByID(string(c))
 }
