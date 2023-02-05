@@ -72,7 +72,7 @@ type Card struct {
 	// Examples: Common, Uncommon, Rare, Mythic Rare, Special, Basic Land.
 	Rarity string `json:"rarity"`
 	// Set defines what expansion set the card belongs to by set code.
-	//Set SetCode `json:"set"`
+	Set SetCode `json:"set"`
 	// SetName defines name of expansion set the card belongs to.
 	SetName string `json:"setName"`
 	// Text defines oracle text of card.
@@ -208,9 +208,8 @@ func checkError(r *http.Response) error {
 }
 
 // Fetch collects card by ID or MultiverseID; retuns Card pointer.
-func Fetch(str string) (*Card, error) {
-	queryURL := ""
-	resp, err := http.Get(fmt.Sprintf("%scards/%s", queryURL, str))
+func Fetch(filterID string) (*Card, error) {
+	resp, err := http.Get(fmt.Sprintf("%scards/%s", queryURL, filterID))
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +225,7 @@ func Fetch(str string) (*Card, error) {
 		return nil, err
 	}
 	if len(cards) != 1 {
-		return nil, fmt.Errorf("Card with ID %s not found", str)
+		return nil, fmt.Errorf("Card with ID %s not found", filterID)
 	}
 	return cards[0], nil
 }
