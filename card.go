@@ -4,15 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"time"
 )
 
 // Ruling contains additional rule information about the card.
 type Ruling struct {
 	// Date the information was released.
-	Date time.Time `json:"date"`
+	Date string `json:"date"`
 	// Text of the ruling hint.
 	Text string `json:"text"`
 }
@@ -133,7 +131,7 @@ type Card struct {
 	// ReleaseDate defines when this card was released.
 	// NOTE: This is only set for promo cards. May not be accurate, some missing.
 	// Only partial date may be set (YYYY-MM-DD or YYYY-MM or YYYY).
-	ReleaseDate time.Time `json:"releaseDate"`
+	ReleaseDate string `json:"releaseDate"`
 	// Starter defines if card only released as part of core box set.
 	Starter bool `json:"starter"`
 	// Rulings define rulings for the card.
@@ -178,20 +176,6 @@ func (s ServerError) Error() string {
 type cardResponse struct {
 	Card  *Card   `json:"card"`
 	Cards []*Card `json:"cards"`
-}
-
-// decodeCards unmarshals resp body to cardResponse struct.
-func decodeCards(reader io.Reader) ([]*Card, error) {
-	cardResp := new(cardResponse)
-	decoder := json.NewDecoder(reader)
-	err := decoder.Decode(&cardResp)
-	if err != nil {
-		return nil, err
-	}
-	if cardResp.Card != nil {
-		return []*Card{cardResp.Card}, nil
-	}
-	return cardResp.Cards, nil
 }
 
 func checkError(r *http.Response) error {

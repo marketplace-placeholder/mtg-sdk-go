@@ -1,6 +1,8 @@
 package mtg
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -134,11 +136,13 @@ func NewQuery() Query {
 type query map[string]string
 
 func fetchCards(url string) ([]*Card, http.Header, error) {
+	// resp is http.Response
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	// resp.Body is io.ReadCloser
 	bdy := resp.Body
 	defer bdy.Close()
 
@@ -150,6 +154,30 @@ func fetchCards(url string) ([]*Card, http.Header, error) {
 		return nil, nil, err
 	}
 	return cards, resp.Header, nil
+}
+
+// decodeCards unmarshals resp body to cardResponse struct.
+func decodeCards(reader io.Reader) ([]*Card, error) {
+	asBytes, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	var cardResp cardResponse
+	err = json.Unmarshal(asBytes, &cardResp)
+	if err != nil {
+		return nil, err
+	}
+	/*
+		decoder := json.NewDecoder(reader)
+		err = decoder.Decode(&cardResp)
+		if err != nil {
+			return nil, err
+		}
+	*/
+	if cardResp.Card != nil {
+		return []*Card{cardResp.Card}, nil
+	}
+	return cardResp.Cards, nil
 }
 
 func (q query) All() ([]*Card, error) {
@@ -186,7 +214,7 @@ func (q query) All() ([]*Card, error) {
 	return allCards, nil
 }
 
-func (q query) Page(pageNum int) (cards []*Card, totalCardCount int, err error) {
+func (q query) Page(pageNum int) ([]*Card, int, error) {
 	return q.PageS(pageNum, 100)
 }
 
@@ -216,6 +244,7 @@ func (q query) PageS(pageNum int, pageSize int) ([]*Card, int, error) {
 	return cards, totalCardCount, nil
 }
 
+// Random cards by page size.
 func (q query) Random(count int) ([]*Card, error) {
 	queryVals := make(url.Values)
 	for k, v := range q {
@@ -230,6 +259,7 @@ func (q query) Random(count int) ([]*Card, error) {
 	return cards, err
 }
 
+// Copy builds a new map using existing parameters.
 func (q query) Copy() Query {
 	r := make(query)
 	for k, v := range q {
@@ -238,6 +268,7 @@ func (q query) Copy() Query {
 	return r
 }
 
+// Where adds parameters to a map used in url.Values.
 func (q query) Where(column cardColumn, qry string) Query {
 	q[string(column)] = qry
 	return q

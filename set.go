@@ -82,11 +82,6 @@ func (s SetCode) GenerateBooster() ([]*Card, error) {
 	return cards, err
 }
 
-// String returns string interpretation of SetCode.
-func (s SetCode) String() string {
-	return fmt.Sprintf("%s", s)
-}
-
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (b *BoosterContent) UnmarshalJSON(asBytes []byte) error {
 	var strData string
