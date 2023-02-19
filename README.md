@@ -11,6 +11,13 @@ OR just let go mod handle dependencies for you by calling
 `go mod init <yourProject>`
 `go mod tidy`
 
+Want to see what sets are in standard?
+`sets, err := mtg.StandardSets()
+if err != nil {
+    return err
+}
+fmt.Println(sets)`
+
 ## Docs
 
 See [GoDoc](https://pkg.go.dev/github.com/Enviy/mtg-sdk-go)
