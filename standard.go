@@ -17,6 +17,7 @@ func StandardCards() ([]*Card, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return cards, nil
 }
 
@@ -27,22 +28,28 @@ func StandardSets() (map[string]SetCode, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(resp.Body)
-	var stdResp standardResp
-	err = json.Unmarshal(body, &stdResp)
 	if err != nil {
+		return nil, err
+	}
+
+	var stdResp standardResp
+	if err := json.Unmarshal(body, &stdResp); err != nil {
 		return nil, err
 	}
 
 	standardSets := make(map[string]SetCode)
 	for _, setItem := range stdResp.Sets {
-		isStandard, err := parseDates(setItem.EnterDate.Exact,
-			setItem.ExitDate.Exact)
+		isStandard, err := parseDates(
+			setItem.EnterDate.Exact,
+			setItem.ExitDate.Exact,
+		)
 		if err != nil {
 			return nil, err
 		}
+
 		if isStandard {
 			standardSets[setItem.Name] = setItem.Code
 		}
@@ -68,6 +75,7 @@ func parseDates(enter, exit string) (bool, error) {
 		}
 		enterValidated = enterDate.Local().Before(currentDate)
 	}
+
 	// If enter is empty, the set is in the future.
 	if enter == "" {
 		return false, nil
@@ -82,6 +90,7 @@ func parseDates(enter, exit string) (bool, error) {
 		}
 		exitValidated = exitDate.Local().After(currentDate)
 	}
+
 	// If exit is empty, the set has not yet left standard.
 	if exit == "" {
 		exitValidated = true

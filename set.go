@@ -17,9 +17,11 @@ var (
 )
 
 // SetCode representing one specific Set of cards
-type SetCode string
-type setColumn string
-type setQuery map[string]string
+type (
+	SetCode   string
+	setColumn string
+	setQuery  map[string]string
+)
 
 // BoosterContent represent one or more types of cards within a booster
 type BoosterContent []string
@@ -28,7 +30,6 @@ type BoosterContent []string
 type Set struct {
 	// SetCode is the code name of the set.
 	SetCode `json:"code"`
-
 	// Name is the name of the set.
 	Name string `json:"name"`
 	// Block is the block the set is in.
@@ -63,7 +64,6 @@ type Set struct {
 type SetQuery interface {
 	// Where filters the given column by the given value.
 	Where(col setColumn, qry string) SetQuery
-
 	// Copy creates a copy of the SetQuery.
 	Copy() SetQuery
 	// All returns alls Sets which match the query.
@@ -89,10 +89,13 @@ func (b *BoosterContent) UnmarshalJSON(asBytes []byte) error {
 	if err := json.Unmarshal(asBytes, &strData); err == nil {
 		*b = []string{strData}
 		return nil
-	} else if err = json.Unmarshal(asBytes, &sDataSlice); err == nil {
+	}
+
+	if err := json.Unmarshal(asBytes, &sDataSlice); err == nil {
 		*b = sDataSlice
 		return nil
 	}
+
 	return fmt.Errorf("Unexpected booster content. Got %q", string(asBytes))
 }
 
@@ -124,6 +127,7 @@ func (s SetCode) Fetch() (*Set, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if len(sets) != 1 {
 		return nil, fmt.Errorf("Set %q not found", string(s))
 	}
@@ -136,6 +140,7 @@ func fetchSets(url string) ([]*Set, http.Header, error) {
 		return nil, nil, err
 	}
 	defer resp.Body.Close()
+
 	if err := checkError(resp); err != nil {
 		return nil, nil, err
 	}
@@ -145,13 +150,14 @@ func fetchSets(url string) ([]*Set, http.Header, error) {
 		Set  *Set   `json:"set"`
 	})
 	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&sr)
-	if err != nil {
+	if err := decoder.Decode(&sr); err != nil {
 		return nil, nil, err
 	}
+
 	if sr.Set != nil {
 		return []*Set{sr.Set}, resp.Header, nil
 	}
+
 	return sr.Sets, resp.Header, nil
 }
 
@@ -214,12 +220,14 @@ func (q setQuery) PageS(pageNum int, pageSize int) ([]*Set, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+
 	totalSetCount = len(sets)
 	if totals, ok := header["Total-Count"]; ok && len(totals) > 0 {
 		if totalSetCount, err = strconv.Atoi(totals[0]); err != nil {
 			return nil, 0, err
 		}
 	}
+
 	return sets, totalSetCount, nil
 }
 

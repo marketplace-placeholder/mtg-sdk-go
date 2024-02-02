@@ -141,7 +141,7 @@ type Card struct {
 	// NOTE: Not available for all sets.
 	ForeignNames []ForeignCardName `json:"foreignNames"`
 	// Printings defines the sets the card was printed in (set codes).
-	//Printings []SetCode `json:"printings"`
+	// Printings []SetCode `json:"printings"`
 	// OriginalText defines text on card when it was first printed.
 	// NOTE: Not available for promo cards.
 	OriginalText string `json:"originalText"`
@@ -184,10 +184,10 @@ func checkError(r *http.Response) error {
 	}
 
 	var sverr ServerError
-
 	if err := json.NewDecoder(r.Body).Decode(&sverr); err != nil {
 		return errors.New(r.Status)
 	}
+
 	return sverr
 }
 
@@ -197,19 +197,22 @@ func Fetch(filterID string) (*Card, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// body is io.Reader
 	body := resp.Body
 	defer body.Close()
-
 	if err := checkError(resp); err != nil {
 		return nil, err
 	}
+
 	cards, err := decodeCards(body)
 	if err != nil {
 		return nil, err
 	}
+
 	if len(cards) != 1 {
 		return nil, fmt.Errorf("Card with ID %s not found", filterID)
 	}
+
 	return cards[0], nil
 }

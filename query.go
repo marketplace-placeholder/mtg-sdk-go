@@ -14,9 +14,7 @@ const (
 	queryURL = "https://api.magicthegathering.io/v1/"
 )
 
-var (
-	linkRE = regexp.MustCompile(`<(.*)>; rel="(.*)"`)
-)
+var linkRE = regexp.MustCompile(`<(.*)>; rel="(.*)"`)
 
 type cardColumn string
 
@@ -113,13 +111,10 @@ type Query interface {
 	Where(column cardColumn, query string) Query
 	// Sorts the query results by the given column
 	OrderBy(column cardColumn) Query
-
 	// Creates a copy of this query
 	Copy() Query
-
 	// Fetches all cards matching the current query
 	All() ([]*Card, error)
-
 	// Fetches the given page of cards.
 	Page(pageNum int) (cards []*Card, totalCardCount int, err error)
 	// Fetches one page of cards with a given page size
@@ -145,14 +140,15 @@ func fetchCards(url string) ([]*Card, http.Header, error) {
 	// resp.Body is io.ReadCloser
 	bdy := resp.Body
 	defer bdy.Close()
-
 	if err := checkError(resp); err != nil {
 		return nil, nil, err
 	}
+
 	cards, err := decodeCards(bdy)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return cards, resp.Header, nil
 }
 
@@ -162,9 +158,9 @@ func decodeCards(reader io.Reader) ([]*Card, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var cardResp cardResponse
-	err = json.Unmarshal(asBytes, &cardResp)
-	if err != nil {
+	if err := json.Unmarshal(asBytes, &cardResp); err != nil {
 		return nil, err
 	}
 	/*
@@ -177,6 +173,7 @@ func decodeCards(reader io.Reader) ([]*Card, error) {
 	if cardResp.Card != nil {
 		return []*Card{cardResp.Card}, nil
 	}
+
 	return cardResp.Cards, nil
 }
 
@@ -196,7 +193,6 @@ func (q query) All() ([]*Card, error) {
 
 		// TODO: Investigate this line's impact on workflow.
 		nextURL = ""
-
 		if linkH, ok := header["Link"]; ok {
 			parts := strings.Split(linkH[0], ",")
 			for _, link := range parts {
@@ -235,12 +231,14 @@ func (q query) PageS(pageNum int, pageSize int) ([]*Card, int, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+
 	totalCardCount = len(cards)
 	if totals, ok := header["Total-Count"]; ok && len(totals) > 0 {
 		if totalCardCount, err = strconv.Atoi(totals[0]); err != nil {
 			return nil, 0, err
 		}
 	}
+
 	return cards, totalCardCount, nil
 }
 

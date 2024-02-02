@@ -12,9 +12,11 @@ func GetTypes() ([]string, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if err := checkError(resp); err != nil {
 		return nil, err
 	}
+
 	res := new(struct {
 		Types []string `json:"types"`
 	})
@@ -22,6 +24,7 @@ func GetTypes() ([]string, error) {
 	if err := decoder.Decode(&res); err != nil {
 		return nil, err
 	}
+
 	return res.Types, nil
 }
 
@@ -32,9 +35,11 @@ func GetSuperTypes() ([]string, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if err := checkError(resp); err != nil {
 		return nil, err
 	}
+
 	res := new(struct {
 		Types []string `json:"supertypes"`
 	})
@@ -42,6 +47,7 @@ func GetSuperTypes() ([]string, error) {
 	if err := decoder.Decode(&res); err != nil {
 		return nil, err
 	}
+
 	return res.Types, nil
 }
 
@@ -52,9 +58,11 @@ func GetSubTypes() ([]string, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if err := checkError(resp); err != nil {
 		return nil, err
 	}
+
 	res := new(struct {
 		Types []string `json:"subtypes"`
 	})
@@ -62,6 +70,7 @@ func GetSubTypes() ([]string, error) {
 	if err := decoder.Decode(&res); err != nil {
 		return nil, err
 	}
+
 	return res.Types, nil
 }
 
@@ -72,9 +81,11 @@ func GetFormats() ([]string, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if err := checkError(resp); err != nil {
 		return nil, err
 	}
+
 	res := new(struct {
 		Formats []string `json:"formats"`
 	})
@@ -82,5 +93,6 @@ func GetFormats() ([]string, error) {
 	if err := decoder.Decode(&res); err != nil {
 		return nil, err
 	}
+
 	return res.Formats, nil
 }
