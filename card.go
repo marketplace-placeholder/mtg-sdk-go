@@ -141,7 +141,7 @@ type Card struct {
 	// NOTE: Not available for all sets.
 	ForeignNames []ForeignCardName `json:"foreignNames"`
 	// Printings defines the sets the card was printed in (set codes).
-	// Printings []SetCode `json:"printings"`
+	Printings []SetCode `json:"printings"`
 	// OriginalText defines text on card when it was first printed.
 	// NOTE: Not available for promo cards.
 	OriginalText string `json:"originalText"`
