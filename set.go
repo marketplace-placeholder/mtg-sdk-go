@@ -49,11 +49,11 @@ type Set struct {
 	// Border is the type of border on the cards.
 	// Either: “white”, “black” or “silver”.
 	Border string `json:"border"`
-	// Expansion is the type of set.
+	// Type of set.
 	// Either: “core”, “expansion”, “reprint”, “box”, “un”, “from the vault”,\
 	// “premium deck”, “duel deck”, “starter”, “commander”, “planechase”,\
 	// “archenemy”, “promo”, “vanguard”, “masters”.
-	Expansion string `json:"expansion"`
+	Type string `json:"type"`
 	// OnlineOnly is if the set was only released online.
 	OnlineOnly bool `json:"onlineOnly"`
 	// Booster contents for this set.
